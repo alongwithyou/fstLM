@@ -1,0 +1,19 @@
+
+# Compiled extensionless executable files in /src/
+# This stanza must precede wildcard patterns below!
+/src/*
+!/src/*.*
+!/src/Makefile
+
+# compiled object files and python files, and directories automatically created
+# on Darwin OS for debug symbols.
+*.o
+*.pyc
+*.dSYM
+
+# emacs saves
+[#]*[#]
+.[#]*
+*~
+
+.depend.mk

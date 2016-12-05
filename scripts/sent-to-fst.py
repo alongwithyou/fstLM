@@ -26,7 +26,7 @@ parser.add_argument("--eos-symbol-id", type=int, default=None,
                     help="id for eos symbol. If specified, generate the FST "
                          "state for EOS.")
 parser.add_argument("--compile-fst", type=str, choices=['true', 'false'],
-                    default='true',
+                    default='false',
                     help="whether compile output fst to openfst format.")
 
 # echo command line to stderr for logging.
@@ -62,9 +62,12 @@ def build_fst_txt(words):
   for word in words:
     fst_txt += "%d %d %d %d\n" % (n_states, n_states + 1, word, word)
     if args.disambig_symbol_id is not None:
-      fst_txt += "%d %d %d %d\n" % (n_states, n_states + 1,
+      fst_txt += "%d %d %d %d\n" % (n_states, n_states,
           args.disambig_symbol_id, args.disambig_symbol_id)
     n_states += 1
+  if args.disambig_symbol_id is not None:
+    fst_txt += "%d %d %d %d\n" % (n_states, n_states,
+        args.disambig_symbol_id, args.disambig_symbol_id)
   fst_txt += "%d\n" % n_states
   return fst_txt, num_words
 
@@ -78,13 +81,12 @@ for line in sys.stdin:
   if args.compile_fst == 'true':
     command = ['fstcompile']
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-    print("%d" % num_words, end='')
+    print("b%d" % num_words)
     print(p.communicate(input=fst_txt)[0], end='')
   else:
-    print("<FST %d>" % n_fsts)
-    print("num_words: %d" % num_words)
+    print("t%d" % num_words)
     print(fst_txt, end='')
-    print("</FST %d>" % n_fsts)
+    print("</FST>")
 
   n_fsts += 1
 

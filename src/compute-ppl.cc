@@ -34,7 +34,7 @@
 #include <stdlib.h>
 
 #include <fst/fstlib.h>
-
+#include <fst/script/compile.h>
 
 /**
    This program loads in a fstLM and reads the sentences FSTs from stdin,
@@ -55,9 +55,11 @@ class PPLComputer {
     assert(argc >= 2);
     lm_ = VectorFst<StdArc>::Read(argv[1]);
     if (!lm_) {
-      std::cerr << "compute-ppl: Reading LM FST error from" << argv[1] << '\n';
+      std::cerr << "compute-ppl: Reading LM FST error from"
+          << argv[1] << '\n';
       exit(1);
     }
+    ArcSort(lm_, ILabelCompare<StdArc>());
 
     ProcessInput();
     ProduceOutput();
@@ -70,10 +72,17 @@ class PPLComputer {
 
   void ProcessInput() {
     while (std::cin.peek(), !std::cin.eof()) {
-      int32 num_words;
-      std::cin >> num_words;
+      string line;
+      getline(std::cin, line);
+      char format = line[0];
+      int num_words = atoi(line.substr(1).c_str());
 
-      VectorFst<StdArc> *fst = ReadNextFst();
+      VectorFst<StdArc> *fst = ReadNextFst(format);
+      if (!fst) {
+          std::cerr << "compute-ppl: Sent " << cur_sent_id_
+              << ": Error read sentence FST\n";
+          exit(1);
+      }
       ProcessCurrentFst(*fst);
       delete fst;
 
@@ -83,28 +92,55 @@ class PPLComputer {
   }
 
   // this function reads next fst from stdin
-  VectorFst<StdArc>* ReadNextFst() {
-    fst::FstHeader hdr;
-    if (!hdr.Read(std::cin, "stdin")) {
+  VectorFst<StdArc>* ReadNextFst(char format) {
+    string content;  // The actual content of the input stream's next FST.
+    if (format == 't') {
+      content.clear();
+      string line;
+      while (getline(std::cin, line)) {
+        if (line == "</FST>") {
+            break;
+        }
+        content.append(line);
+        content.append("\n");
+      }
+
+      std::istringstream is(content);
+      std::ostringstream oss;
+      oss << cur_sent_id_ << ".fst";
+      FstCompiler<StdArc> fstcompiler(is, oss.str(), NULL,
+                               NULL, NULL, false, false,
+                               false, false, false);
+
+      VectorFst<StdArc> *fst = fstcompiler.Fst().Copy();
+      return fst;
+    } else if (format == 'b') {
+      fst::FstHeader hdr;
+      if (!hdr.Read(std::cin, "stdin")) {
+        std::cerr << "compute-ppl: Sent " << cur_sent_id_
+            << ": Error reading sentence FST header\n";
+        exit(1);
+      }
+      FstReadOptions ropts("<unspecified>", &hdr);
+      VectorFst<StdArc> *fst = VectorFst<StdArc>::Read(std::cin, ropts);
+      if (!fst) {
+        std::cerr << "compute-ppl: Sent " << cur_sent_id_
+            << ": Could not read sentenct fst\n";
+        exit(1);
+      }
+      return fst;
+    } else {
       std::cerr << "compute-ppl: Sent " << cur_sent_id_
-          << ": Error reading sentence FST header\n";
+          << ": Unknown file format\n";
       exit(1);
     }
-    FstReadOptions ropts("<unspecified>", &hdr);
-    VectorFst<StdArc> *fst = VectorFst<StdArc>::Read(std::cin, ropts);
-    if (!fst) {
-      std::cerr << "compute-ppl: Sent " << cur_sent_id_
-          << ": Could not read sentenct fst\n";
-      exit(1);
-    }
-    return fst;
   }
 
   void ProcessCurrentFst(VectorFst<StdArc> &fst) {
       VectorFst<StdArc> comp_fst;
       VectorFst<StdArc> ofst;
 
-      Compose(*lm_, fst, &comp_fst);
+      Compose(fst, *lm_, &comp_fst);
 
       ShortestPath(comp_fst, &ofst);
 
@@ -114,8 +150,13 @@ class PPLComputer {
 
 #ifdef _FSTLM_DEBUG_
       std::ostringstream oss;
+      oss << cur_sent_id_ << ".fst";
+      fst.Write(oss.str());
+      oss.clear();
+      oss.str("");
       oss << cur_sent_id_ << ".comp.fst";
       comp_fst.Write(oss.str());
+      oss.clear();
       oss.str("");
       oss << cur_sent_id_ << ".final.fst";
       ofst.Write(oss.str());

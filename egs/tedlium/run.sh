@@ -21,22 +21,23 @@ if [ ! -d data ]; then
   mkdir data
 fi
 
-head -n $num_dev_sentences < cantab-TEDLIUM/cantab-TEDLIUM.txt | sed 's/ <\/s>//g'  > data/dev.txt
+head -n $num_dev_sentences < cantab-TEDLIUM/cantab-TEDLIUM.txt \
+  | sed 's/ <\/s>//g'  > data/dev.txt
 
-gunzip -c $lm |\
-  arpa2fst --disambig-symbol=$disambig --write-symbol-table=data/words.txt - data/G.fst
-disambig_id=grep '$disambig' data/words.txt | awk '{print $1}'
+gunzip -c $lm | arpa2fst --disambig-symbol=$disambig \
+                         --write-symbol-table=data/words.txt - data/G.fst
+disambig_id=`grep "$disambig" data/words.txt | awk '{print $2}'`
 
-sym2int.pl --map-oov '<unk>' data/words.txt < data/dev.txt > data/dev.int
+sym2int.pl --map-oov '<unk>' data/words.txt < data/dev.txt \
+  | sent-to-fst.py --disambig-symbol-id=$disambig_id \
+  | compute-ppl data/G.fst
 
-cat data/dev.int | sent-to-fst.py --disambig-symbol-id=$disambig_id | compute-ppl data/G.fst
-
-# With 15000 dev sentences and 250000 cantap-TEDLIUM sentences:
+# With 15000 dev sentences
 # srilm perplexity:
 # ngram -lm cantab-TEDLIUM/cantab-TEDLIUM-pruned.lm3.gz -ppl data/dev.txt
 # ppl= 132.944 ppl1= 172.832
 
 # fstlm perplexity:
 # ppl=131.065
-# it is slightly different with srilm, since sometimes the backoff arc could be
-# better than non-backoff arc.
+# it is slightly better than srilm, since sometimes there could be a
+# better path through backoff arc.

@@ -17,3 +17,5 @@
 *~
 
 .depend.mk
+egs/tedlium/cantab-TEDLIUM
+egs/*/data/

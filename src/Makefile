@@ -20,7 +20,7 @@ clean:
 
 CXXFLAGS += -Wall -g
 # suppressing warnings from openfst
-CXXFLAGS+=-Wno-sign-compare -Wno-unused-local-typedefs
+CXXFLAGS+=-Wno-sign-compare -Wno-unused-local-typedefs -Wno-mismatched-tags
 LDFLAGS += -g -lfst
 
 ifeq ($(shell uname), Darwin)

@@ -26,11 +26,8 @@ head -n $num_dev_sentences < cantab-TEDLIUM/cantab-TEDLIUM.txt \
 
 gunzip -c $lm | arpa2fst --disambig-symbol=$disambig \
                          --write-symbol-table=data/words.txt - data/G.fst
-disambig_id=`grep "$disambig" data/words.txt | awk '{print $2}'`
 
-sym2int.pl --map-oov '<unk>' data/words.txt < data/dev.txt \
-  | sent-to-fst.py --disambig-symbol-id=$disambig_id \
-  | compute-ppl data/G.fst
+../steps/compute-ppl.sh data/G.fst data/words.txt data/dev.txt $disambig
 
 # With 15000 dev sentences
 # srilm perplexity:

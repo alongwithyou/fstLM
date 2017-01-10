@@ -47,8 +47,7 @@ using namespace fst;
 
 class PPLComputer {
  public:
-  PPLComputer(int argc,
-               const char **argv):
+  PPLComputer(int argc, char **argv):
       total_log_prob_(0.0),
       total_count_(0), cur_sent_id_(0) {
 
@@ -209,14 +208,16 @@ class PPLComputer {
 
 }  // namespace fstlm
 
-int main (int argc, const char **argv) {
+int main (int argc, char **argv) {
+  const char *usage = "Usage: compute-ppl <lm_fst> < <sent_fsts>\n"
+              "This program reads in a fst LM and compute the ppl for "
+              "sentence FSTs from stdin, then prints the total perplexity "
+              "to stdout.\n"
+              "The sentence FSTs are typically built by sent-to-fst.py.\n";
+  SET_FLAGS(usage, &argc, &argv, true);
+
   if (argc < 2) {
-    std::cerr << "usage:\n"
-              << "compute-ppl <lm_fst> < <sent_fsts>\n"
-              << "This program reads in a fst LM and compute the ppl for "
-              << "sentence FSTs from stdin, then prints the total perplexity "
-              << "to stdout.\n"
-              << "The sentence FSTs are typically built by sent-to-fst.py.\n";
+    ShowUsage();
     exit(1);
   }
 

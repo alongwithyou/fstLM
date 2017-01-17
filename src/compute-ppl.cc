@@ -181,25 +181,26 @@ class PPLComputer {
 
     Weight weight = Weight::One();
 
-    for (StateIterator<StdFst> siter(fst); !siter.Done(); siter.Next()) {
-      StateId st = siter.Value();
+    int32 num_words = 0;
+    StateId st = initial_state;
+    while (fst.Final(st) == Weight::Zero()) {
+      assert(fst.NumArcs(st) == 1);
       for (ArcIterator<StdFst> aiter(fst, st); !aiter.Done(); aiter.Next()) {
         const StdArc &arc = aiter.Value();
         weight = Times(weight, arc.weight);
         if (FLAGS_debug >= 2) {
-            std::cout << arc.weight.Value() << "\n";
+            std::cout << arc.ilabel << "\t" << arc.weight.Value() << "\n";
         }
+        st = arc.nextstate;
       }
-      if (fst.Final(st) != Weight::Zero()) {
-          weight = Times(weight, fst.Final(st));
-          if (FLAGS_debug >= 2) {
-              std::cout << "Final: " << fst.Final(st).Value() << "\n";
-          }
-      }
+      num_words++;
+    }
+    if (FLAGS_debug >= 2 && fst.Final(st).Value() != 0.0) {
+      std::cout << "Final: " << fst.Final(st).Value() << "\n";
     }
 
     if (FLAGS_debug >= 1) {
-      std::cout << "Total: " << weight.Value() << "\n";
+      std::cout << "Total: " << num_words << "\t" << weight.Value() << "\n";
     }
 
     return weight.Value();

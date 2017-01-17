@@ -42,6 +42,8 @@
 
 */
 
+DEFINE_int32(debug, 0, "debug level");
+
 namespace fstlm {
 using namespace fst;
 
@@ -173,6 +175,10 @@ class PPLComputer {
       return 0.0;
     }
 
+    if (FLAGS_debug >= 1) {
+      std::cout << "Sent: " << cur_sent_id_ << "\n";
+    }
+
     Weight weight = Weight::One();
 
     for (StateIterator<StdFst> siter(fst); !siter.Done(); siter.Next()) {
@@ -180,10 +186,20 @@ class PPLComputer {
       for (ArcIterator<StdFst> aiter(fst, st); !aiter.Done(); aiter.Next()) {
         const StdArc &arc = aiter.Value();
         weight = Times(weight, arc.weight);
+        if (FLAGS_debug >= 2) {
+            std::cout << arc.weight.Value() << "\n";
+        }
       }
       if (fst.Final(st) != Weight::Zero()) {
           weight = Times(weight, fst.Final(st));
+          if (FLAGS_debug >= 2) {
+              std::cout << "Final: " << fst.Final(st).Value() << "\n";
+          }
       }
+    }
+
+    if (FLAGS_debug >= 1) {
+      std::cout << "Total: " << weight.Value() << "\n";
     }
 
     return weight.Value();

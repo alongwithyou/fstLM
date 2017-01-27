@@ -30,7 +30,10 @@ fst=$1
 word_syms=$2
 testset=$3
 
-disambig_id=`grep "$disambig_symbol" "$word_syms" | awk '{print $2}'`
+disambig_id=-1
+if [ -n "$disambig_symbol" ]; then
+  disambig_id=`grep "$disambig_symbol" "$word_syms" | awk '{print $2}'`
+fi
 bos_symbol_id=-1
 if [ -n "$bos_symbol" ]; then
   bos_symbol_id=`grep "$bos_symbol" "$word_syms" | awk '{print $2}'`

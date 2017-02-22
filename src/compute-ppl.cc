@@ -51,7 +51,8 @@ class PPLComputer {
  public:
   PPLComputer(int argc, char **argv):
       total_log_prob_(0.0),
-      total_count_(0), cur_sent_id_(0) {
+      total_count_(0), cur_sent_id_(0),
+      invalid_count_(0), num_invalid_sents_(0) {
 
     assert(argc >= 2);
     lm_ = VectorFst<StdArc>::Read(argv[1]);
@@ -84,11 +85,17 @@ class PPLComputer {
               << ": Error read sentence FST\n";
           exit(1);
       }
-      ProcessCurrentFst(*fst);
+      double p = ProcessCurrentFst(*fst);
       delete fst;
 
       cur_sent_id_++;
-      total_count_ += num_words;
+
+      if (p != 0.0) {
+        total_count_ += num_words;
+      } else {
+        num_invalid_sents_ ++;
+        invalid_count_ += num_words;
+      }
     }
   }
 
@@ -137,7 +144,7 @@ class PPLComputer {
     }
   }
 
-  void ProcessCurrentFst(VectorFst<StdArc> &fst) {
+  double ProcessCurrentFst(VectorFst<StdArc> &fst) {
       VectorFst<StdArc> comp_fst;
       VectorFst<StdArc> ofst;
 
@@ -162,6 +169,8 @@ class PPLComputer {
       oss << cur_sent_id_ << ".final.fst";
       ofst.Write(oss.str());
 #endif
+
+      return log_prob;
   }
 
   double GetProb(VectorFst<StdArc> &fst) {
@@ -209,6 +218,10 @@ class PPLComputer {
   void ProduceOutput() {
     double ppl = exp(total_log_prob_ / total_count_);
     std::cout << std::setprecision(10) << ppl << "\n";
+    if (num_invalid_sents_ > 0) {
+        std::cerr << "compute-ppl: There are " << num_invalid_sents_
+            << " invalid sentences (with " << invalid_count_ << " words).\n";
+    }
     std::cerr << "compute-ppl: average log-prob per word was "
               << (total_log_prob_ / total_count_)
               << " (perplexity = " << ppl << ") over "
@@ -221,6 +234,8 @@ class PPLComputer {
   double total_log_prob_;
   int64 total_count_;
   int64 cur_sent_id_;
+  int64 invalid_count_;
+  int64 num_invalid_sents_;
 };
 
 }  // namespace fstlm

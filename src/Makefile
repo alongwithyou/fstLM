@@ -19,6 +19,7 @@ clean:
 	-rm *.o $(BINFILES) $(TESTFILES)
 
 CXXFLAGS += -Wall -g
+CXXFLAGS += -std=c++11
 # suppressing warnings from openfst
 CXXFLAGS+=-Wno-sign-compare -Wno-unused-local-typedefs -Wno-mismatched-tags
 LDFLAGS += -g -lfst

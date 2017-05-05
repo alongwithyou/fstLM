@@ -8,7 +8,7 @@ TESTFILES =
 
 OBJFILES =
 
-BINFILES = compute-ppl
+BINFILES = compute-ppl connlmfst-to-arpa
 
 $(BINFILES): $(OBJFILES)
 

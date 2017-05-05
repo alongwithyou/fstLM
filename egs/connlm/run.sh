@@ -14,5 +14,3 @@ gunzip -c data/g.txt.gz | fstcompile --isymbols=data/words.txt --osymbols=data/w
                         --bos-symbol '<s>' \
                         --eos-symbol '</s>' \
                         data/g.fst data/words.txt data/test.txt
-
-# PPL is 107.093

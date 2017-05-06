@@ -6,3 +6,4 @@ export LD_LIBRARY_PATH=$KALDI_ROOT/tools/openfst/lib:$LD_LIBRARY_PATH
 export FSTLM_ROOT=`pwd`/../..
 export PATH=$FSTLM_ROOT/src:$FSTLM_ROOT/scripts:$PATH
 
+if [ -f $KALDI_ROOT/tools/env.sh ]; then . $KALDI_ROOT/tools/env.sh; fi
